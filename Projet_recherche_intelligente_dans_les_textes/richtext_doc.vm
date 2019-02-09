@@ -1,0 +1,200 @@
+#**
+ *  Render a complex document in the results list
+ *#
+
+## Load Mime-Type List and Mapping
+#parse('mime_type_lists.vm')
+## Sets:
+## * supportedMimeTypes, AKA supportedtypes
+## * mimeExtensionsMap, AKA extMap
+
+## Title
+#if($doc.getFieldValue('title'))
+  #set($title = $esc.html($doc.getFirstValue('title')))
+#else
+  #set($title = "["+$doc.getFieldValue('id')+"]")
+#end
+
+## URL
+#if($doc.getFieldValue('url'))
+  #set($url = $doc.getFieldValue('url'))
+#elseif($doc.getFieldValue('resourcename'))
+  #set($url = "file:///$doc.getFieldValue('resourcename')")
+#else
+  #set($url = "$doc.getFieldValue('id')")
+#end
+
+## Sort out Mime-Type
+#set($ct = $list.get($doc.getFirstValue('content_type').split(";"),0))
+#set($filename = $doc.getFieldValue('resourcename'))
+#set($filetype = false)
+#set($filetype = $mimeExtensionsMap.get($ct))
+
+## TODO: falling back to file extension is convenient,
+## except when you don't have an icon for that extension
+## example "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+## document with a .docx extension.
+## It'd be nice to fall back to an "unknown" or the existing "file" type
+## We sort of do this below, but only if the filename has no extension
+## (anything after the last dot).
+
+#if(!$filetype)
+  #set($filetype = $filename.substring($filename.lastIndexOf(".")).substring(1))
+#end
+
+## #if(!$filetype)
+##   #set($filetype = "file")
+## #end
+## #if(!$supportedMimeTypes.contains($filetype))
+##   #set($filetype = "file")
+## #end
+
+
+
+## Complaint_ID
+#if($doc.getFieldValue('Complaint_ID'))
+  <div>
+    Complaint_ID: #field('Complaint_ID')
+  </div>
+#end
+
+## Start_Date
+#if($doc.getFieldValue('Start_Date'))
+  <div>
+    Start_Date: #field('Start_Date')
+  </div>
+#end
+
+## End_Date
+#if($doc.getFieldValue('End_Date'))
+  <div>
+    End_Date: #field('End_Date')
+  </div>
+#end
+
+## Crime
+#if($doc.getFieldValue('Crime'))
+  <div>
+    Crime: #field('Crime')
+  </div>
+#end
+
+## Type_of_Crime
+#if($doc.getFieldValue('Type_of_Crime'))
+  <div>
+    Type_of_Crime: #field('Type_of_Crime')
+  </div>
+#end
+
+## State
+#if($doc.getFieldValue('State'))
+  <div>
+    State: #field('State')
+  </div>
+#end
+
+## Jurisdiction
+#if($doc.getFieldValue('Jurisdiction'))
+  <div>
+    Jurisdiction: #field('Jurisdiction')
+  </div>
+#end
+
+## Borough
+#if($doc.getFieldValue('Borough'))
+  <div>
+    Borough: #field('Borough')
+  </div>
+#end
+
+## Exact_Place
+#if($doc.getFieldValue('Exact_Place'))
+  <div>
+    Exact_Place: #field('Exact_Place')
+  </div>
+#end
+
+
+## Main content of doc
+<div class="result-body">
+  #field('content')
+</div>
+
+## Display Similar Documents / MLT = More Like This
+<div class="mlt">
+  #set($mlt = $mltResults.get($docId))
+  #set($mltOn = $params.getBool('mlt'))
+  #if($mltOn == true)
+    <div class="field-name">
+      Similar Items
+    </div>
+  #end
+  ## If has MLT enabled An Entries to show
+  #if ($mltOn && $mlt && $mlt.size() > 0)
+    <ul>
+      #foreach($mltHit in $mlt)
+        #set($mltId = $mltHit.getFieldValue('id'))
+        <li>
+		
+          <div>
+            <a href="#url_for_home?q=id:$mltId">
+              $mltId</a>
+          </div>
+		  
+          <div>
+            <span class="field-name">
+              Complaint_ID:
+            </span>
+            $mltHit.getFieldValue('Complaint_ID')
+          </div>
+		  
+          <div>
+            <span class="field-name">
+              Start_Date:
+            </span>
+            $mltHit.getFieldValue('Start_Date')
+            <span class="field-name">
+              End_Date:
+            </span>
+            $mltHit.getFieldValue('End_Date')
+          </div>
+		  
+          <div>
+            <span class="field-name">
+              Crime:
+            </span>
+            $mltHit.getFieldValue('Crime')
+            <span class="field-name">
+              Type_of_Crime:
+            </span>
+            $mltHit.getFieldValue('Type_of_Crime')
+          </div>
+		  
+		  <div>
+            <span class="field-name">
+              State:
+            </span>
+            $mltHit.getFieldValue('State')
+            <span class="field-name">
+              Jurisdiction:
+            </span>
+            $mltHit.getFieldValue('Jurisdiction')
+            <span class="field-name">
+              Borough:
+            </span>
+            $mltHit.getFieldValue('Borough')
+            <span class="field-name">
+              Exact_Place:
+            </span>
+            $mltHit.getFieldValue('Exact_Place')
+			</div>
+        </li>
+      #end    ## end for each mltHit in $mlt
+    </ul>
+  ## Else MLT Enabled but no mlt results for this query
+  #elseif($mltOn && $mlt.size() == 0)
+    <div>No Similar Items Found</div>
+  #end
+</div>  ## div class=mlt
+
+#parse('debug.vm')
